@@ -83,15 +83,11 @@
               delete_on_termination: true
       register: ec2_instances
 
-#    - name: Debug ec2_instances
-#      debug:
-#        var: ec2_instances
-
     - name: Add instances to hosts group
       add_host:
         hostname: "{{ item.instances[0].public_ip_address }}"
         ansible_ssh_private_key_file: "/Users/iayalon/.ssh/idan.east.new.pem"
-        ansible_user: ec2-user  # or any other user depending on the AMI
+        ansible_user: admin  # or any other user depending on the AMI
         ansible_python_interpreter: /usr/bin/python3  # Path to Python interpreter on the instance
         group: launched
       with_items: "{{ ec2_instances.results }}"
@@ -105,9 +101,11 @@
         state: started
       with_items: "{{ ec2_instances.results }}"
 
+    - name: Wait for 300 seconds
+      pause:
+        seconds: 300
+
     - name: SSH into each instance and run command
-      wait_for:
-        delay: 600
       command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password Avi123$%^"
       with_items: "{{ ec2_instances.results }}"
 

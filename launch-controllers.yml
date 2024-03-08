@@ -83,31 +83,35 @@
               volume_size: "{{ disk_size_gb }}"
               volume_type: "{{ disk_type }}"
               delete_on_termination: true
-      register: ec2
+      register: ec2_instances
 
     - name: Add instances to hosts group
       add_host:
-        hostname: "{{ item.instances[0].public_ip }}"
-        ansible_ssh_private_key_file: "/path/to/your/private/key.pem"
-        ansible_user: ec2-user  # or any other user depending on the AMI
+        hostname: "{{ item.instances[0].public_ip_address }}"
+        ansible_ssh_private_key_file: "/Users/iayalon/.ssh/idan.east.new.pem"
+        ansible_user: admin  # or any other user depending on the AMI
         ansible_python_interpreter: /usr/bin/python3  # Path to Python interpreter on the instance
         group: launched
       with_items: "{{ ec2_instances.results }}"
 
     - name: Wait for SSH to come up
       wait_for:
-        host: "{{ item.instances[0].public_ip }}"
+        host: "{{ item.instances[0].public_ip_address }}"
         port: 22
         delay: 60
-        timeout: 320
+        timeout: 600
         state: started
       with_items: "{{ ec2_instances.results }}"
 
+    - name: Wait for 300 seconds
+      pause:
+        seconds: 300
+
     - name: SSH into each instance and run command
-      command: ssh -i /path/to/your/private/key.pem ec2-user@{{ item.instances[0].public_ip }} date
+      command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password Avi123$%^"
       with_items: "{{ ec2_instances.results }}"
 
     - name: Print public IP addresses of deployed instances
       debug:
-        msg: "Instance {{ item.item }} - Public IP: {{ item.instances[0].public_ip }}"
+        msg: "Instance {{ item.item }} - Public IP: {{ item.instances[0].public_ip_address }}"
       with_items: "{{ ec2_instances.results }}"
