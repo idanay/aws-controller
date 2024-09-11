@@ -4,6 +4,7 @@
   gather_facts: no
   collections:
     - amazon.aws
+    - vmware.alb
   vars:
     region: "us-east-1"
     key_pair: "Idan.east.new"
@@ -108,7 +109,7 @@
         seconds: 300
 
     - name: SSH into each instance and run command
-      command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password Avi123$%^"
+      command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password ********"
       with_items: "{{ ec2_instances.results }}"
 
     - name: Print public IP addresses of deployed instances

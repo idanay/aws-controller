@@ -1,0 +1,41 @@
+---
+- name: Deploy instance from Marketplace
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - amazon.aws
+    - vmware.alb
+  vars_files:
+    - creds.yml
+    - aws_credentials.yml
+  vars:
+    region: "us-east-1"
+    key_pair: "Idan.east.new"
+    vpc_subnet_ids:
+      - subnet: "subnet-0b67ec48b2a37de38"
+      - subnet: "subnet-00150fd96bb592e3e"
+      - subnet: "subnet-00aaa162eddf6a2eb"
+    vpc_id: "vpc-0d6c6685b7aaeca47"
+    marketplace_image: "ami-01bb8c8dc94f25ded"
+    instance_type: "m5.2xlarge"
+    security_group_name: "AviControllerSG"
+    disk_size_gb: "250"
+    disk_type: "gp3"
+    iam_role: "AviController-Refined-Role"
+    tags:
+      Name: "AviControllerNew"
+      shutdown_policy: "noshut"
+      Dept: "fse-amers"
+      Owner: "idan.ayalon@broadcom.com"
+  tasks:
+
+    - name: Create SystemConfiguration object
+      vmware.alb.avi_systemconfiguration:
+        avi_credentials: "{{ avi_credentials }}"
+        state: present
+        welcome_workflow_complete: True
+        dns_configuration:
+          search_domain: ''
+          server_list:
+            - type: V4
+              addr: "1.1.1.1"

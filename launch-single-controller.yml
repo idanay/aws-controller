@@ -10,6 +10,7 @@
     vpc_subnet_ids:
       - subnet: "subnet-0b67ec48b2a37de38"
     vpc_id: "vpc-0d6c6685b7aaeca47"
+    
     marketplace_image: "ami-01bb8c8dc94f25ded"
     instance_type: "m5.2xlarge"
     security_group_name: "AviControllerSG"
@@ -106,10 +107,30 @@
         seconds: 300
 
     - name: SSH into each instance and run command
-      command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password Avi123$%^"
+      command: ssh -o StrictHostKeyChecking=no -i /Users/iayalon/.ssh/idan.east.new.pem admin@{{ item.instances[0].public_ip_address }} "sudo /opt/avi/scripts/initialize_admin_user.py --password ********"
       with_items: "{{ ec2_instances.results }}"
 
     - name: Print public IP addresses of deployed instances
       debug:
         msg: "Instance {{ item.item }} - Public IP: {{ item.instances[0].public_ip_address }}"
+      with_items: "{{ ec2_instances.results }}"
+
+    - name: Configure AWS cloud
+      avi_controller_cloud:
+        controller: "{{ item.instances[0].public_ip_address }}"
+        username: "admin"
+        password: "your_password"
+        state: present
+        name: "AWS-Cloud"
+        type: "CLOUD_AWS"
+        aws_configuration:
+          region: "us-west-2"  # Your AWS region
+          access_key: "your_aws_access_key"
+          secret_key: "your_aws_secret_key"
+          vpc_id: "your_vpc_id"
+          mgmt_subnet_uuid: "your_mgmt_subnet_uuid"  # Management subnet UUID in Avi
+          enable_vpc_dns: true
+          vpc_dns_auto_resolution: true
+          vpc_dns_server_type: "VPC_DNS_TYPE_DEFAULT"
+          enable_vpc_dns_synchronize: true
       with_items: "{{ ec2_instances.results }}"
